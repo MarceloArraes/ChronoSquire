@@ -1,78 +1,80 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Holiday {
-  id: number
-  date: string
-  name: string
+  id: number;
+  date: string;
+  name: string;
 }
 
 export default function HolidayManager() {
-  const [holidays, setHolidays] = useState<Holiday[]>([])
-  const [newHolidayDate, setNewHolidayDate] = useState("")
-  const [newHolidayName, setNewHolidayName] = useState("")
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [newHolidayDate, setNewHolidayDate] = useState("");
+  const [newHolidayName, setNewHolidayName] = useState("");
 
   useEffect(() => {
-    fetchHolidays()
-  }, [])
+    fetchHolidays().catch((err) => {
+      console.log("err", err);
+    });
+  }, []);
 
   const fetchHolidays = async () => {
     try {
-      const response = await fetch("/api/holidays")
+      const response = await fetch("/api/holidays");
       if (response.ok) {
-        const data = await response.json()
-        setHolidays(data)
+        const data = await response.json();
+        setHolidays(data);
       } else {
-        throw new Error("Failed to fetch holidays")
+        throw new Error("Failed to fetch holidays");
       }
     } catch (error) {
-      console.error("Error fetching holidays:", error)
+      console.error("Error fetching holidays:", error);
     }
-  }
+  };
 
   const handleAddHoliday = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       const response = await fetch("/api/holidays", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: newHolidayDate, name: newHolidayName }),
-      })
+      });
 
       if (response.ok) {
-        await fetchHolidays()
-        setNewHolidayDate("")
-        setNewHolidayName("")
+        await fetchHolidays();
+        setNewHolidayDate("");
+        setNewHolidayName("");
       } else {
-        throw new Error("Failed to add holiday")
+        throw new Error("Failed to add holiday");
       }
     } catch (error) {
-      console.error("Error adding holiday:", error)
+      console.error("Error adding holiday:", error);
     }
-  }
+  };
 
   const handleDeleteHoliday = async (id: number) => {
     try {
       const response = await fetch(`/api/holidays/${id}`, {
         method: "DELETE",
-      })
+      });
 
       if (response.ok) {
-        await fetchHolidays()
+        await fetchHolidays();
       } else {
-        throw new Error("Failed to delete holiday")
+        throw new Error("Failed to delete holiday");
       }
     } catch (error) {
-      console.error("Error deleting holiday:", error)
+      console.error("Error deleting holiday:", error);
     }
-  }
+  };
 
   return (
     <Card>
@@ -107,11 +109,14 @@ export default function HolidayManager() {
         </form>
         <ul className="space-y-2">
           {holidays.map((holiday) => (
-            <li key={holiday.id} className="flex justify-between items-center">
+            <li key={holiday.id} className="flex items-center justify-between">
               <span>
                 {new Date(holiday.date).toLocaleDateString()} - {holiday.name}
               </span>
-              <Button variant="destructive" onClick={() => handleDeleteHoliday(holiday.id)}>
+              <Button
+                variant="destructive"
+                onClick={() => handleDeleteHoliday(holiday.id)}
+              >
                 Delete
               </Button>
             </li>
@@ -119,6 +124,5 @@ export default function HolidayManager() {
         </ul>
       </CardContent>
     </Card>
-  )
+  );
 }
-
