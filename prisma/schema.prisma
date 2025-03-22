@@ -55,14 +55,17 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String         @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String?        @unique
     emailVerified DateTime?
     image         String?
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    HourlyRate    HourlyRate[]
+    WorkSchedule  WorkSchedule[]
+    TimeEntry     TimeEntry[]
 }
 
 model VerificationToken {
@@ -71,4 +74,46 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model HourlyRate {
+    id           Int     @id @default(autoincrement())
+    userId       String
+    dayOfWeek    Int
+    isNightShift Boolean
+    rate         Decimal @db.Decimal(10, 2)
+
+    user User @relation(fields: [userId], references: [id])
+
+    @@unique([userId, dayOfWeek, isNightShift], name: "user_day_shift_unique")
+}
+
+model WorkSchedule {
+    id        Int      @id @default(autoincrement())
+    userId    String
+    dayOfWeek Int
+    startTime DateTime @db.Time
+    endTime   DateTime @db.Time
+
+    user User @relation(fields: [userId], references: [id])
+
+    @@unique([userId, dayOfWeek])
+}
+
+model TimeEntry {
+    id        Int      @id @default(autoincrement())
+    userId    String
+    date      DateTime @db.Date
+    startTime DateTime @db.Time
+    endTime   DateTime @db.Time
+
+    user User @relation(fields: [userId], references: [id])
+}
+
+model Holiday {
+    id   Int      @id @default(autoincrement())
+    date DateTime @db.Date
+    name String
+
+    @@unique([date])
 }
