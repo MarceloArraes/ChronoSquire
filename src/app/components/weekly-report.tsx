@@ -1,91 +1,101 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface TimeEntry {
-  id: number
-  date: string
-  start_time: string
-  end_time: string
+  id: number;
+  date: string;
+  start_time: string;
+  end_time: string;
 }
 
 interface HourlyRate {
-  id: number
-  day_of_week: number
-  is_night_shift: boolean
-  rate: number
+  id: number;
+  day_of_week: number;
+  is_night_shift: boolean;
+  rate: number;
 }
 
 export default function WeeklyReport() {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
-  const [hourlyRates, setHourlyRates] = useState<HourlyRate[]>([])
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [hourlyRates, setHourlyRates] = useState<HourlyRate[]>([]);
+  const [startDate, setStartDate] = useState<string | undefined>("");
+  const [endDate, setEndDate] = useState<string | undefined>("");
 
   useEffect(() => {
-    const today = new Date()
-    const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-    setStartDate(oneWeekAgo.toISOString().split("T")[0])
-    setEndDate(today.toISOString().split("T")[0])
-  }, [])
+    const today = new Date();
+    const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    setStartDate(oneWeekAgo.toISOString().split("T")[0]);
+    setEndDate(today.toISOString().split("T")[0]);
+  }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
-      fetchTimeEntries()
-      fetchHourlyRates()
+      fetchTimeEntries().catch((err) => {
+        console.log("err", err);
+      });
+      fetchHourlyRates().catch((err) => {
+        console.log("err", err);
+      });
     }
-  }, [startDate, endDate])
+  }, [startDate, endDate]);
 
   const fetchTimeEntries = async () => {
     try {
-      const response = await fetch(`/api/time-entries?startDate=${startDate}&endDate=${endDate}`)
+      const response = await fetch(
+        `/api/time-entries?startDate=${startDate}&endDate=${endDate}`,
+      );
       if (response.ok) {
-        const data = await response.json()
-        setTimeEntries(data)
+        const data = await response.json();
+        setTimeEntries(data);
       } else {
-        throw new Error("Failed to fetch time entries")
+        throw new Error("Failed to fetch time entries");
       }
     } catch (error) {
-      console.error("Error fetching time entries:", error)
+      console.error("Error fetching time entries:", error);
     }
-  }
+  };
 
   const fetchHourlyRates = async () => {
     try {
-      const response = await fetch("/api/hourly-rates")
+      const response = await fetch("/api/hourly-rates");
       if (response.ok) {
-        const data = await response.json()
-        setHourlyRates(data)
+        const data = await response.json();
+        setHourlyRates(data);
       } else {
-        throw new Error("Failed to fetch hourly rates")
+        throw new Error("Failed to fetch hourly rates");
       }
     } catch (error) {
-      console.error("Error fetching hourly rates:", error)
+      console.error("Error fetching hourly rates:", error);
     }
-  }
+  };
 
   const calculateTotalHours = () => {
     return timeEntries.reduce((total, entry) => {
-      const start = new Date(`${entry.date}T${entry.start_time}`)
-      const end = new Date(`${entry.date}T${entry.end_time}`)
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
-      return total + hours
-    }, 0)
-  }
+      const start = new Date(`${entry.date}T${entry.start_time}`);
+      const end = new Date(`${entry.date}T${entry.end_time}`);
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      return total + hours;
+    }, 0);
+  };
 
   const calculateTotalEarnings = () => {
     return timeEntries.reduce((total, entry) => {
-      const start = new Date(`${entry.date}T${entry.start_time}`)
-      const end = new Date(`${entry.date}T${entry.end_time}`)
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
-      const dayOfWeek = new Date(entry.date).getDay()
-      const isNightShift = start.getHours() >= 18 || end.getHours() < 6
-      const rate = hourlyRates.find((r) => r.day_of_week === dayOfWeek && r.is_night_shift === isNightShift)?.rate || 0
-      return total + hours * rate
-    }, 0)
-  }
+      const start = new Date(`${entry.date}T${entry.start_time}`);
+      const end = new Date(`${entry.date}T${entry.end_time}`);
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      const dayOfWeek = new Date(entry.date).getDay();
+      const isNightShift = start.getHours() >= 18 || end.getHours() < 6;
+      const rate =
+        hourlyRates.find(
+          (r) =>
+            r.day_of_week === dayOfWeek && r.is_night_shift === isNightShift,
+        )?.rate ?? 0;
+      return total + hours * rate;
+    }, 0);
+  };
 
   return (
     <Card>
@@ -93,9 +103,12 @@ export default function WeeklyReport() {
         <CardTitle>Weekly Report</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between mb-4">
+        <div className="mb-4 flex justify-between">
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="startDate"
+              className="block text-sm font-medium text-gray-700"
+            >
               Start Date
             </label>
             <input
@@ -107,7 +120,10 @@ export default function WeeklyReport() {
             />
           </div>
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="endDate"
+              className="block text-sm font-medium text-gray-700"
+            >
               End Date
             </label>
             <input
@@ -121,10 +137,12 @@ export default function WeeklyReport() {
         </div>
         <div className="space-y-4">
           <p>
-            <strong>Total Hours Worked:</strong> {calculateTotalHours().toFixed(2)} hours
+            <strong>Total Hours Worked:</strong>{" "}
+            {calculateTotalHours().toFixed(2)} hours
           </p>
           <p>
-            <strong>Total Earnings:</strong> ${calculateTotalEarnings().toFixed(2)}
+            <strong>Total Earnings:</strong> $
+            {calculateTotalEarnings().toFixed(2)}
           </p>
         </div>
         <Button onClick={fetchTimeEntries} className="mt-4">
@@ -132,6 +150,5 @@ export default function WeeklyReport() {
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
-
