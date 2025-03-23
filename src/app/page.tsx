@@ -20,6 +20,24 @@ export default async function Home() {
       <main className="flex min-h-screen flex-col items-center justify-between p-24">
         <h1 className="mb-8 text-4xl font-bold">Time Tracker</h1>
         {session ? <Dashboard user={session.user} /> : <LoginButton />}
+        <Link
+          href={"/hourly-rate"}
+          // className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+        >
+          Hourly rates
+        </Link>
+        <Link
+          href={"/time-entries"}
+          // className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+        >
+          Time Entries
+        </Link>
+        <Link
+          href={"/time-entry-form"}
+          // className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+        >
+          Time Entry Form
+        </Link>
         <div className="flex flex-col items-center justify-center gap-4">
           <p className="text-center text-2xl text-white">
             {session && <span>Logged in as {session.user?.name}</span>}

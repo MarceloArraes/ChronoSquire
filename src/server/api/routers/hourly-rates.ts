@@ -11,31 +11,6 @@ export const hourlyRateRouter = createTRPCRouter({
     return hourlyRates ?? null;
   }),
 
-  //   upsert: protectedProcedure
-  //     .input(
-  //       z.object({
-  //         day_of_week: z.number().int().min(0).max(6),
-  //         is_night_shift: z.boolean(),
-  //         rate: z.number().positive(),
-  //       }),
-  //     )
-  //     .mutation(async ({ ctx, input }) => {
-  //       // Upsert using PostgreSQL's ON CONFLICT syntax
-  //       return ctx.db.query(
-  //         `INSERT INTO hourly_rates (user_id, day_of_week, is_night_shift, rate)
-  //          VALUES ($1, $2, $3, $4)
-  //          ON CONFLICT (user_id, day_of_week, is_night_shift)
-  //          DO UPDATE SET rate = EXCLUDED.rate
-  //          RETURNING *`,
-  //         [
-  //           ctx.session.user.id,
-  //           input.day_of_week,
-  //           input.is_night_shift,
-  //           input.rate,
-  //         ],
-  //       );
-  //     }),
-
   upsert: protectedProcedure
     .input(
       z.object({

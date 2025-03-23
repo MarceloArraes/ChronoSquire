@@ -1,6 +1,7 @@
 import { postRouter } from "@/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { hourlyRateRouter } from "./routers/hourly-rates";
+import { timeEntriesRouter } from "./routers/time-entries";
 
 /**
  * This is the primary router for your server.
@@ -10,6 +11,7 @@ import { hourlyRateRouter } from "./routers/hourly-rates";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   hourlyRate: hourlyRateRouter,
+  timeEntries: timeEntriesRouter,
 });
 
 // export type definition of API

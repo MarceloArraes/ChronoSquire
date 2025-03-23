@@ -1,36 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface TimeEntry {
-  id: number;
-  date: string;
-  start_time: string;
-  end_time: string;
-}
+import { api } from "@/trpc/react";
+import { type TimeEntry } from "@prisma/client";
 
 export default function TimeEntriesList() {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  // const utils = api.useUtils();
+  const queryResult = api.timeEntries.get.useQuery();
 
-  useEffect(() => {
-    const fetchTimeEntries = async () => {
-      const today = new Date();
-      const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const response = await fetch(
-        `/api/time-entries?startDate=${oneWeekAgo.toISOString().split("T")[0]}&endDate=${today.toISOString().split("T")[0]}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setTimeEntries(data);
-      } else {
-        console.error("Failed to fetch time entries");
-      }
-    };
-    fetchTimeEntries().catch((err) => {
-      console.log("err", err);
-    });
-  }, []);
+  if (queryResult.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (queryResult.isError) {
+    return <div>Error loading rates</div>;
+  }
+  const entries: TimeEntry[] = queryResult.data ?? [];
+  console.log("entries", entries);
 
   return (
     <Card>
@@ -39,11 +25,30 @@ export default function TimeEntriesList() {
       </CardHeader>
       <CardContent>
         <ul className="space-y-2">
-          {timeEntries.map((entry) => (
+          {entries.map((entry) => (
             <li key={entry.id} className="flex items-center justify-between">
-              <span>{new Date(entry.date).toLocaleDateString()}</span>
+              {/* Date display */}
               <span>
-                {entry.start_time} - {entry.end_time}
+                {new Date(entry.date).toLocaleDateString("en-AU", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+
+              {/* Time display */}
+              <span>
+                {new Date(entry.startTime).toLocaleTimeString("en-AU", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}{" "}
+                -{" "}
+                {new Date(entry.endTime).toLocaleTimeString("en-AU", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
               </span>
             </li>
           ))}

@@ -108,6 +108,8 @@ model TimeEntry {
     endTime   DateTime @db.Time
 
     user User @relation(fields: [userId], references: [id])
+
+    @@unique([userId, date, startTime, endTime], name: "user_day_start_end")
 }
 
 model Holiday {
