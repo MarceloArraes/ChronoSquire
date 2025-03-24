@@ -11,6 +11,46 @@ export const timeEntriesRouter = createTRPCRouter({
     return timeEntries ?? null;
   }),
 
+  getByWeek: protectedProcedure
+    .input(
+      z.object({
+        initialDate: z
+          .string()
+          .regex(
+            /^\d{4}-\d{2}-\d{2}$/,
+            "Invalid date format (expected YYYY-MM-DD)",
+          )
+          .optional(),
+        endDate: z
+          .string()
+          .regex(
+            /^\d{4}-\d{2}-\d{2}$/,
+            "Invalid date format (expected YYYY-MM-DD)",
+          )
+          .optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // Build a date filter dynamically.
+      const dateFilter: { gte?: Date; lte?: Date } = {};
+      if (input.initialDate) {
+        dateFilter.gte = new Date(input.initialDate); // converts "YYYY-MM-DD" to a Date at midnight
+      }
+      if (input.endDate) {
+        // Append time to cover the whole day.
+        dateFilter.lte = new Date(input.endDate + "T23:59:59.999Z");
+      }
+
+      const timeEntries = await ctx.db.timeEntry.findMany({
+        orderBy: { date: "desc" },
+        where: {
+          userId: ctx.session.user.id,
+          ...(Object.keys(dateFilter).length && { date: dateFilter }),
+        },
+      });
+      return timeEntries;
+    }),
+
   upsert: protectedProcedure
     .input(
       z.object({

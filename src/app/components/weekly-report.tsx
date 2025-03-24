@@ -3,99 +3,134 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { api } from "@/trpc/react";
+import { type HourlyRate, type TimeEntry } from "@prisma/client";
+import { useSearchParams } from "next/navigation";
 
-interface TimeEntry {
-  id: number;
-  date: string;
-  start_time: string;
-  end_time: string;
-}
+const getStartOfWeek = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when Sunday
+  return new Date(d.setDate(diff));
+};
 
-interface HourlyRate {
-  id: number;
-  day_of_week: number;
-  is_night_shift: boolean;
-  rate: number;
-}
+// Helper function to get end of week (Sunday)
+const getEndOfWeek = (date: Date) => {
+  const start = getStartOfWeek(date);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return end;
+};
+
+const formatTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}:00`;
+};
 
 export default function WeeklyReport() {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [hourlyRates, setHourlyRates] = useState<HourlyRate[]>([]);
+  const searchParams = useSearchParams();
   const [startDate, setStartDate] = useState<string | undefined>("");
   const [endDate, setEndDate] = useState<string | undefined>("");
 
+  // Set initial dates from URL params
   useEffect(() => {
     const today = new Date();
-    const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    setStartDate(oneWeekAgo.toISOString().split("T")[0]);
-    setEndDate(today.toISOString().split("T")[0]);
-  }, []);
+    const defaultStart = getStartOfWeek(today).toISOString().split("T")[0];
+    const defaultEnd = getEndOfWeek(today).toISOString().split("T")[0];
 
-  useEffect(() => {
-    if (startDate && endDate) {
-      fetchTimeEntries().catch((err) => {
-        console.log("err", err);
-      });
-      fetchHourlyRates().catch((err) => {
-        console.log("err", err);
-      });
-    }
-  }, [startDate, endDate]);
+    setStartDate(searchParams.get("start-date") ?? defaultStart);
+    setEndDate(searchParams.get("end-date") ?? defaultEnd);
+  }, [searchParams]);
 
-  const fetchTimeEntries = async () => {
-    try {
-      const response = await fetch(
-        `/api/time-entries?startDate=${startDate}&endDate=${endDate}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setTimeEntries(data);
-      } else {
-        throw new Error("Failed to fetch time entries");
-      }
-    } catch (error) {
-      console.error("Error fetching time entries:", error);
-    }
-  };
+  const queryResult = api.timeEntries.getByWeek.useQuery({
+    initialDate: startDate, // Fixed parameter name here
+    endDate: endDate,
+  });
+  // const utils = api.useUtils();
+  const hourlyQueryResult = api.hourlyRate.get.useQuery();
 
-  const fetchHourlyRates = async () => {
-    try {
-      const response = await fetch("/api/hourly-rates");
-      if (response.ok) {
-        const data = await response.json();
-        setHourlyRates(data);
-      } else {
-        throw new Error("Failed to fetch hourly rates");
-      }
-    } catch (error) {
-      console.error("Error fetching hourly rates:", error);
-    }
-  };
+  const entries: TimeEntry[] = queryResult.data ?? [];
+  const rates: HourlyRate[] = hourlyQueryResult.data ?? [];
+  console.log("entries", entries);
 
   const calculateTotalHours = () => {
-    return timeEntries.reduce((total, entry) => {
-      const start = new Date(`${entry.date}T${entry.start_time}`);
-      const end = new Date(`${entry.date}T${entry.end_time}`);
+    return entries.reduce((total, entry) => {
+      if (!entry.date || !entry.startTime || !entry.endTime) return total;
+
+      // Format date as YYYY-MM-DD
+      const dateString = entry.date.toISOString().split("T")[0];
+
+      // Extract time components from start/end time Date objects
+
+      const startString = `${dateString}T${formatTime(entry.startTime)}`;
+      const endString = `${dateString}T${formatTime(entry.endTime)}`;
+
+      const start = new Date(startString);
+      const end = new Date(endString);
+
+      // Handle cross-midnight scenario
+      if (end < start) end.setDate(end.getDate() + 1);
+
       const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       return total + hours;
     }, 0);
   };
 
   const calculateTotalEarnings = () => {
-    return timeEntries.reduce((total, entry) => {
-      const start = new Date(`${entry.date}T${entry.start_time}`);
-      const end = new Date(`${entry.date}T${entry.end_time}`);
+    return entries.reduce((total, entry) => {
+      if (!entry.date || !entry.startTime || !entry.endTime) return total;
+
+      // Format date as YYYY-MM-DD
+      const dateString = entry.date.toISOString().split("T")[0];
+
+      // Create proper ISO date strings
+      const startString = `${dateString}T${formatTime(entry.startTime)}`;
+      const endString = `${dateString}T${formatTime(entry.endTime)}`;
+
+      const start = new Date(startString);
+      const end = new Date(endString);
+
+      // Handle cross-midnight scenario
+      if (end < start) end.setDate(end.getDate() + 1);
+
+      // Validate dates
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.error("Invalid date:", { startString, endString });
+        return total;
+      }
+
       const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      const dayOfWeek = new Date(entry.date).getDay();
+      const dayOfWeek = start.getDay(); // Use start time's day of week
       const isNightShift = start.getHours() >= 18 || end.getHours() < 6;
+
       const rate =
-        hourlyRates.find(
-          (r) =>
-            r.day_of_week === dayOfWeek && r.is_night_shift === isNightShift,
+        rates.find(
+          (r) => r.dayOfWeek === dayOfWeek && r.isNightShift === isNightShift,
         )?.rate ?? 0;
-      return total + hours * rate;
+
+      return total + hours * Number(rate);
     }, 0);
   };
+
+  console.log("calculateTotalHours()", calculateTotalHours());
+
+  const handleRefresh = () => {
+    void queryResult.refetch();
+    void hourlyQueryResult.refetch();
+  };
+
+  if (queryResult.isLoading || hourlyQueryResult.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (queryResult.isError) {
+    return <div>Error loading time entries</div>;
+  }
+
+  if (hourlyQueryResult.isError) {
+    return <div>Error loading rates</div>;
+  }
 
   return (
     <Card>
@@ -145,7 +180,7 @@ export default function WeeklyReport() {
             {calculateTotalEarnings().toFixed(2)}
           </p>
         </div>
-        <Button onClick={fetchTimeEntries} className="mt-4">
+        <Button onClick={handleRefresh} className="mt-4">
           Refresh Report
         </Button>
       </CardContent>
