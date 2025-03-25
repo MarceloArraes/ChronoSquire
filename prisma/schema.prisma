@@ -66,6 +66,7 @@ model User {
     HourlyRate    HourlyRate[]
     WorkSchedule  WorkSchedule[]
     TimeEntry     TimeEntry[]
+    Company       Company[]
 }
 
 model VerificationToken {
@@ -76,16 +77,31 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
+model Company {
+    id          String       @id @default(cuid())
+    name        String
+    address     String?
+    phone       String?
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+    userId      String
+    user        User         @relation(fields: [userId], references: [id])
+    hourlyRates HourlyRate[]
+    TimeEntry   TimeEntry[]
+}
+
 model HourlyRate {
     id           Int     @id @default(autoincrement())
     userId       String
+    companyId    String
     dayOfWeek    Int
     isNightShift Boolean
     rate         Decimal @db.Decimal(10, 2)
 
-    user User @relation(fields: [userId], references: [id])
+    user    User    @relation(fields: [userId], references: [id])
+    Company Company @relation(fields: [companyId], references: [id])
 
-    @@unique([userId, dayOfWeek, isNightShift], name: "user_day_shift_unique")
+    @@unique([userId, companyId, dayOfWeek, isNightShift], name: "user_company_day_shift_unique")
 }
 
 model WorkSchedule {
@@ -101,15 +117,28 @@ model WorkSchedule {
 }
 
 model TimeEntry {
-    id        Int      @id @default(autoincrement())
-    userId    String
-    date      DateTime @db.Date
-    startTime DateTime @db.Time
-    endTime   DateTime @db.Time
+    id           Int      @id @default(autoincrement())
+    userId       String
+    companyId    String
+    date         DateTime @db.Date
+    startTime    DateTime @db.Time
+    endTime      DateTime @db.Time
+    breakMinutes Int      @default(0) // In minutes
+    totalTime    Decimal? @db.Decimal(5, 2) // Calculated hours
+    earnings     Decimal? @db.Decimal(10, 2) // Calculated based on rate
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-    user User @relation(fields: [userId], references: [id])
+    // Relations
+    user    User    @relation(fields: [userId], references: [id])
+    company Company @relation(fields: [companyId], references: [id])
 
-    @@unique([userId, date, startTime, endTime], name: "user_day_start_end")
+    // Composite unique constraint
+    @@unique([userId, companyId, date, startTime], name: "user_company_shift_unique")
+    // Indexes for common queries
+    @@index([userId])
+    @@index([companyId])
+    @@index([date])
 }
 
 model Holiday {

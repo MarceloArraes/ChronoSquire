@@ -57,6 +57,8 @@ export const timeEntriesRouter = createTRPCRouter({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
         startTime: z.string().regex(/^\d{2}:\d{2}$/), // HH:MM (24h format)
         endTime: z.string().regex(/^\d{2}:\d{2}$/),
+        breakMinutes: z.number().optional(),
+        companyId: z.string(),
       }),
     )
     .output(z.custom<TimeEntry>()) // Add explicit output type
@@ -64,6 +66,7 @@ export const timeEntriesRouter = createTRPCRouter({
       const entryDate = new Date(input.date);
       const startTime = new Date(`1970-01-01T${input.startTime}:00`);
       const endTime = new Date(`1970-01-01T${input.endTime}:00`);
+      // const breakTime = new Date(`1970-01-01T${input.breakTime}:00`);
 
       if (startTime >= endTime) {
         throw new Error("Start time must be before end time");
@@ -71,11 +74,11 @@ export const timeEntriesRouter = createTRPCRouter({
 
       const result = await ctx.db.timeEntry.upsert({
         where: {
-          user_day_start_end: {
+          user_company_shift_unique: {
             userId: ctx.session.user.id,
             date: entryDate,
             startTime: startTime,
-            endTime: endTime,
+            companyId: input.companyId,
           },
         },
         create: {
@@ -83,6 +86,8 @@ export const timeEntriesRouter = createTRPCRouter({
           date: new Date(input.date),
           startTime: startTime,
           endTime: endTime,
+          companyId: input.companyId,
+          breakMinutes: input.breakMinutes,
         },
         update: {
           startTime: startTime,

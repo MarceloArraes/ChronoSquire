@@ -2,8 +2,6 @@
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import Link from "next/link";
-import TimeEntriesList from "../components/time-entries-list";
-import TimeEntryForm from "../components/time-entry-form";
 import {
   Card,
   CardHeader,
@@ -14,6 +12,8 @@ import {
 import { LogOut, LogIn, Calendar, Clock } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
+import CompanyForm from "../components/company-entry-form";
+import CompaniesList from "../components/companies-list";
 
 export default async function Home() {
   const session = await auth();
@@ -22,7 +22,9 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
       <nav className="mb-12 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">Time Tracker</h1>
+        <Link href={"/"}>
+          <h1 className="text-3xl font-bold text-gray-800">Companies Menu</h1>
+        </Link>
         <Link
           href={session ? "/api/auth/signout" : "/api/auth/signin"}
           className="flex items-center gap-2 rounded-lg bg-white px-6 py-3 shadow-sm transition-all hover:shadow-md"
@@ -46,11 +48,11 @@ export default async function Home() {
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Calendar className="h-6 w-6 text-primary" />
-              New Time Entry
+              New Company
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <TimeEntryForm />
+            <CompanyForm />
           </CardContent>
         </Card>
 
@@ -60,11 +62,11 @@ export default async function Home() {
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Clock className="h-6 w-6 text-primary" />
-              Recent Entries
+              Companies
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <TimeEntriesList />
+            <CompaniesList />
           </CardContent>
           <CardFooter className="border-t bg-gray-50 px-6 py-4">
             <p className="text-sm text-gray-500">Showing last 30 entries</p>

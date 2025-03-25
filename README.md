@@ -4,4 +4,6 @@
 - so the entry form has to have the company associated
 - add a table of companies
 - improve on the looks of the pages and on the dark mode that don't seem to be working;
--
+- Check how the night shift is working.
+- Improve on screens
+- Add Lunch break;
