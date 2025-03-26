@@ -7,6 +7,9 @@ export const timeEntriesRouter = createTRPCRouter({
     const timeEntries = await ctx.db.timeEntry.findMany({
       orderBy: { date: "desc" },
       where: { userId: ctx.session.user.id },
+      include: {
+        company: true,
+      },
     });
     return timeEntries ?? null;
   }),

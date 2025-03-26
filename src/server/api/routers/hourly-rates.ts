@@ -17,16 +17,18 @@ export const hourlyRateRouter = createTRPCRouter({
         day_of_week: z.number().int().min(0).max(6),
         is_night_shift: z.boolean(),
         rate: z.number().positive(),
+        companyId: z.string(),
       }),
     )
     .output(z.custom<HourlyRate>()) // Add explicit output type
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db.hourlyRate.upsert({
         where: {
-          user_day_shift_unique: {
+          user_company_day_shift_unique: {
             userId: ctx.session.user.id,
             dayOfWeek: input.day_of_week,
             isNightShift: input.is_night_shift,
+            companyId: input.companyId,
           },
         },
         create: {
@@ -34,6 +36,7 @@ export const hourlyRateRouter = createTRPCRouter({
           dayOfWeek: input.day_of_week,
           isNightShift: input.is_night_shift,
           rate: input.rate,
+          companyId: input.companyId,
         },
         update: {
           rate: input.rate,
