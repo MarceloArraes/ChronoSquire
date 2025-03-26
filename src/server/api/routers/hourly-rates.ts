@@ -7,6 +7,9 @@ export const hourlyRateRouter = createTRPCRouter({
     const hourlyRates = await ctx.db.hourlyRate.findMany({
       orderBy: { dayOfWeek: "desc" },
       where: { userId: ctx.session.user.id },
+      include: {
+        Company: true,
+      },
     });
     return hourlyRates ?? null;
   }),

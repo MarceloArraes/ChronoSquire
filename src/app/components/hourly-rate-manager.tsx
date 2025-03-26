@@ -7,7 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/react";
-import { type HourlyRate } from "@prisma/client";
+import { type Company, type HourlyRate } from "@prisma/client";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const daysOfWeek = [
   "Sunday",
@@ -22,10 +31,12 @@ const daysOfWeek = [
 export default function HourlyRateManager() {
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [isNightShift, setIsNightShift] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [rate, setRate] = useState("");
 
   const utils = api.useUtils();
   const queryResult = api.hourlyRate.get.useQuery();
+  const companiesQueryResult = api.companies.getAll.useQuery();
 
   const { mutate: upsertRate } = api.hourlyRate.upsert.useMutation({
     onSuccess: () => {
@@ -50,12 +61,13 @@ export default function HourlyRateManager() {
   };
 
   const handleSave = () => {
-    if (editingDay === null) return;
+    if (editingDay === null || !companyId) return;
 
     upsertRate({
       day_of_week: editingDay,
       is_night_shift: isNightShift,
       rate: Number.parseFloat(rate),
+      companyId: companyId,
     });
   };
 
@@ -67,24 +79,51 @@ export default function HourlyRateManager() {
     return <div>Error loading rates</div>;
   }
 
-  const rates: HourlyRate[] = queryResult.data ?? [];
-
+  const rates: HourlyRate[] =
+    queryResult.data?.filter((rate) => rate.companyId == companyId) ?? [];
+  const companies: Company[] = companiesQueryResult.data ?? [];
+  console.log("hourly Rate", rates);
+  console.log("companies", companies);
   return (
     <Card className="mx-auto max-w-2xl">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl">Hourly Rates</CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-6">
+        <Select
+          defaultValue={companyId ?? ""}
+          onValueChange={(e) => {
+            console.log("e", e);
+            setCompanyId(e);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a company" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Companies</SelectLabel>
+              {companies.map((company) => {
+                return (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         {daysOfWeek.map((day, index) => (
           <div key={index} className="space-y-4">
             <div className="border-b pb-2">
-              <h3 className="text-foreground text-base font-medium">{day}</h3>
+              <h3 className="text-base font-medium text-foreground">{day}</h3>
             </div>
 
             {/* Day Shift */}
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4 px-2">
-                <span className="text-muted-foreground text-sm">Day Shift</span>
+                <span className="text-sm text-muted-foreground">Day Shift</span>
                 <div className="flex items-center gap-2">
                   {editingDay === index && !isNightShift ? (
                     <>
@@ -121,7 +160,7 @@ export default function HourlyRateManager() {
 
               {/* Night Shift */}
               <div className="flex items-center justify-between gap-4 px-2">
-                <span className="text-muted-foreground text-sm">
+                <span className="text-sm text-muted-foreground">
                   Night Shift
                 </span>
                 <div className="flex items-center gap-2">
