@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { type Company } from "@prisma/client";
 
 export const companyRouter = createTRPCRouter({
   create: protectedProcedure
@@ -20,7 +19,7 @@ export const companyRouter = createTRPCRouter({
             userId: ctx.session.user.id,
           },
         });
-        return createdCompany as Company;
+        return createdCompany;
       } catch (error) {
         console.log("error", error);
 
@@ -33,10 +32,10 @@ export const companyRouter = createTRPCRouter({
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
     try {
-      return (await ctx.db.company.findMany({
+      return await ctx.db.company.findMany({
         where: { userId: ctx.session.user.id },
         orderBy: { createdAt: "desc" },
-      })) as Company[];
+      });
     } catch (error) {
       console.log("error", error);
       throw new TRPCError({
