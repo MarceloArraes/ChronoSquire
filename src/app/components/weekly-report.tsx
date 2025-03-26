@@ -80,7 +80,7 @@ export default function WeeklyReport() {
   const calculateTotalEarnings = () => {
     return entries.reduce((total, entry) => {
       if (!entry.date || !entry.startTime || !entry.endTime) return total;
-
+      console.log("entry", entry);
       // Format date as YYYY-MM-DD
       const dateString = entry.date.toISOString().split("T")[0];
 
@@ -106,7 +106,10 @@ export default function WeeklyReport() {
 
       const rate =
         rates.find(
-          (r) => r.dayOfWeek === dayOfWeek && r.isNightShift === isNightShift,
+          (r) =>
+            r.dayOfWeek === dayOfWeek &&
+            r.isNightShift === isNightShift &&
+            r.companyId == entry.companyId,
         )?.rate ?? 0;
 
       return total + hours * Number(rate);

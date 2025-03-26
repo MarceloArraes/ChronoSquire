@@ -13,7 +13,9 @@ export default async function Home() {
 
   return (
     <div>
-      <h1 className="mb-8 text-4xl font-bold">Hourly Rate</h1>
+      <Link href={"/"}>
+        <h1 className="mb-8 text-4xl font-bold">Hourly Rate</h1>
+      </Link>
       <HourlyRateManager />
       <Link
         href={session ? "/api/auth/signout" : "/api/auth/signin"}
