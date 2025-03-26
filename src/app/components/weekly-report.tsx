@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-import { type HourlyRate, type TimeEntry } from "@prisma/client";
+import { type TimeEntry } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 
 const getStartOfWeek = (date: Date) => {
@@ -20,12 +20,6 @@ const getEndOfWeek = (date: Date) => {
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
   return end;
-};
-
-const formatTime = (date: Date) => {
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}:00`;
 };
 
 export default function WeeklyReport() {
@@ -51,68 +45,33 @@ export default function WeeklyReport() {
   const hourlyQueryResult = api.hourlyRate.get.useQuery();
 
   const entries: TimeEntry[] = queryResult.data ?? [];
-  const rates: HourlyRate[] = hourlyQueryResult.data ?? [];
+  // const rates: HourlyRate[] = hourlyQueryResult.data ?? [];
   console.log("entries", entries);
 
   const calculateTotalHours = () => {
     return entries.reduce((total, entry) => {
-      if (!entry.date || !entry.startTime || !entry.endTime) return total;
+      try {
+        if (!entry.date || !entry.startTime || !entry.endTime) return total;
+        if (!entry.totalTime) return total;
 
-      // Format date as YYYY-MM-DD
-      const dateString = entry.date.toISOString().split("T")[0];
-
-      // Extract time components from start/end time Date objects
-
-      const startString = `${dateString}T${formatTime(entry.startTime)}`;
-      const endString = `${dateString}T${formatTime(entry.endTime)}`;
-
-      const start = new Date(startString);
-      const end = new Date(endString);
-
-      // Handle cross-midnight scenario
-      if (end < start) end.setDate(end.getDate() + 1);
-
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      return total + hours;
+        return total + Number(entry.totalTime.toFixed(2));
+      } catch (error) {
+        console.error("Invalid entry:", entry, error);
+        return total;
+      }
     }, 0);
   };
 
   const calculateTotalEarnings = () => {
     return entries.reduce((total, entry) => {
-      if (!entry.date || !entry.startTime || !entry.endTime) return total;
-      console.log("entry", entry);
-      // Format date as YYYY-MM-DD
-      const dateString = entry.date.toISOString().split("T")[0];
+      try {
+        if (!entry.earnings) return total;
 
-      // Create proper ISO date strings
-      const startString = `${dateString}T${formatTime(entry.startTime)}`;
-      const endString = `${dateString}T${formatTime(entry.endTime)}`;
-
-      const start = new Date(startString);
-      const end = new Date(endString);
-
-      // Handle cross-midnight scenario
-      if (end < start) end.setDate(end.getDate() + 1);
-
-      // Validate dates
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        console.error("Invalid date:", { startString, endString });
+        return total + Number(entry.earnings.toFixed(2));
+      } catch (error) {
+        console.error("Invalid entry:", entry, error);
         return total;
       }
-
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      const dayOfWeek = start.getDay(); // Use start time's day of week
-      const isNightShift = start.getHours() >= 18 || end.getHours() < 6;
-
-      const rate =
-        rates.find(
-          (r) =>
-            r.dayOfWeek === dayOfWeek &&
-            r.isNightShift === isNightShift &&
-            r.companyId == entry.companyId,
-        )?.rate ?? 0;
-
-      return total + hours * Number(rate);
     }, 0);
   };
 

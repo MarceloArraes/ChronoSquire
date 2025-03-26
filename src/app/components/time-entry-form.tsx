@@ -61,11 +61,7 @@ export default function TimeEntryForm() {
       return;
     }
 
-    if (new Date(`${date}T${endTime}`) <= new Date(`${date}T${startTime}`)) {
-      toast.error("End time must be after start time");
-      return;
-    }
-
+    console.log("handle submit");
     upsertTimeEntry({
       date,
       startTime,

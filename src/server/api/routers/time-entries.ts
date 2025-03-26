@@ -71,9 +71,52 @@ export const timeEntriesRouter = createTRPCRouter({
       const endTime = new Date(`1970-01-01T${input.endTime}:00`);
       // const breakTime = new Date(`1970-01-01T${input.breakTime}:00`);
 
-      if (startTime >= endTime) {
-        throw new Error("Start time must be before end time");
+      const startDateTime = new Date(entryDate);
+      startDateTime.setHours(startTime.getHours(), startTime.getMinutes());
+      const endDateTime = new Date(entryDate);
+      endDateTime.setHours(endTime.getHours(), endTime.getMinutes());
+
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
       }
+
+      const nightStart = new Date(entryDate);
+      nightStart.setHours(22, 0, 0, 0); // 10 PM
+
+      const nightEnd = new Date(nightStart);
+      nightEnd.setDate(nightEnd.getDate() + 1);
+      nightEnd.setHours(6, 0, 0, 0); // 6 AM next day
+
+      const isNightShift = startDateTime < nightEnd && endDateTime > nightStart;
+
+      const rate = await ctx.db.hourlyRate.findFirst({
+        where: {
+          userId: ctx.session.user.id,
+          companyId: input.companyId,
+          dayOfWeek: entryDate.getDay(),
+          isNightShift: isNightShift,
+        },
+        include: {
+          Company: true,
+        },
+      });
+
+      const breakMs = (input.breakMinutes ?? 0) * 60 * 1000; // Convert minutes to milliseconds
+      const totalMs = endDateTime.getTime() - startDateTime.getTime() - breakMs;
+      const totalTime = totalMs / (1000 * 60 * 60); // Convert to hours
+
+      let earnings = 0;
+      if (rate) {
+        earnings = totalTime * Number(rate.rate);
+      } else {
+        console.log("No rate found for this entry:", {
+          userId: ctx.session.user.id,
+          companyId: input.companyId,
+        });
+      }
+
+      const roundedTotalTime = Math.round(totalTime * 100) / 100;
+      const roundedEarnings = Math.round(earnings * 100) / 100;
 
       const result = await ctx.db.timeEntry.upsert({
         where: {
@@ -91,10 +134,15 @@ export const timeEntriesRouter = createTRPCRouter({
           endTime: endTime,
           companyId: input.companyId,
           breakMinutes: input.breakMinutes,
+          earnings: roundedEarnings,
+          totalTime: roundedTotalTime,
         },
         update: {
           startTime: startTime,
           endTime: endTime,
+          breakMinutes: input.breakMinutes ?? 0,
+          earnings: roundedEarnings,
+          totalTime: roundedTotalTime,
         },
       });
 
