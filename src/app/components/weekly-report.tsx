@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import { type TimeEntry } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);
@@ -42,47 +43,48 @@ export default function WeeklyReport() {
     endDate: endDate,
   });
   // const utils = api.useUtils();
-  const hourlyQueryResult = api.hourlyRate.get.useQuery();
 
   const entries: TimeEntry[] = queryResult.data ?? [];
   // const rates: HourlyRate[] = hourlyQueryResult.data ?? [];
   console.log("entries", entries);
 
   const calculateTotalHours = () => {
-    return entries.reduce((total, entry) => {
+    const total = entries.reduce((total, entry) => {
       try {
         if (!entry.date || !entry.startTime || !entry.endTime) return total;
         if (!entry.totalTime) return total;
 
-        return total + Number(entry.totalTime.toFixed(2));
+        return total + Number(entry.totalTime);
       } catch (error) {
         console.error("Invalid entry:", entry, error);
         return total;
       }
     }, 0);
+    return total.toFixed(2);
   };
+  console.log("calculateTotalHours", calculateTotalHours());
 
   const calculateTotalEarnings = () => {
-    return entries.reduce((total, entry) => {
+    const earningTotal = entries.reduce((total, entry) => {
       try {
         if (!entry.earnings) return total;
 
-        return total + Number(entry.earnings.toFixed(2));
+        return total + Number(entry.earnings.toString());
       } catch (error) {
         console.error("Invalid entry:", entry, error);
         return total;
       }
     }, 0);
+    return earningTotal.toFixed(2);
   };
 
   console.log("calculateTotalHours()", calculateTotalHours());
 
   const handleRefresh = () => {
     void queryResult.refetch();
-    void hourlyQueryResult.refetch();
   };
 
-  if (queryResult.isLoading || hourlyQueryResult.isLoading) {
+  if (queryResult.isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -90,61 +92,73 @@ export default function WeeklyReport() {
     return <div>Error loading time entries</div>;
   }
 
-  if (hourlyQueryResult.isError) {
-    return <div>Error loading rates</div>;
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Weekly Report</CardTitle>
+    <Card className="border-amber-700/30 bg-white/50 shadow-md">
+      <CardHeader className="border-b border-amber-700/30">
+        <CardTitle className="font-serif italic text-amber-950">
+          Weekly Tally of Labors
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex justify-between">
-          <div>
+      <CardContent className="pt-6">
+        <div className="mb-6 flex justify-between gap-4">
+          <div className="w-1/2">
             <label
               htmlFor="startDate"
-              className="block text-sm font-medium text-gray-700"
+              className="block font-serif text-sm italic text-amber-900"
             >
-              Start Date
+              First Day of Reckoning
             </label>
             <input
               type="date"
               id="startDate"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border border-amber-700/30 bg-amber-50 p-2 font-serif shadow-inner focus:border-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-700"
             />
           </div>
-          <div>
+          <div className="w-1/2">
             <label
               htmlFor="endDate"
-              className="block text-sm font-medium text-gray-700"
+              className="block font-serif text-sm italic text-amber-900"
             >
-              End Date
+              Final Day of Reckoning
             </label>
             <input
               type="date"
               id="endDate"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border border-amber-700/30 bg-amber-50 p-2 font-serif shadow-inner focus:border-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-700"
             />
           </div>
         </div>
-        <div className="space-y-4">
-          <p>
-            <strong>Total Hours Worked:</strong>{" "}
-            {calculateTotalHours().toFixed(2)} hours
+
+        <div className="space-y-4 rounded-md border border-amber-700/30 bg-amber-100/50 p-4 shadow-inner">
+          <p className="font-serif italic text-amber-900">
+            <span className="font-semibold">Total Hours of Toil:</span>{" "}
+            {calculateTotalHours()} hours
           </p>
-          <p>
-            <strong>Total Earnings:</strong> $
-            {calculateTotalEarnings().toFixed(2)}
+          <p className="font-serif italic text-amber-900">
+            <span className="font-semibold">Gold Earned:</span>{" "}
+            {calculateTotalEarnings()} crowns
           </p>
         </div>
-        <Button onClick={handleRefresh} className="mt-4">
-          Refresh Report
-        </Button>
+
+        <div className="mt-6 flex justify-between">
+          <Link
+            href="/"
+            className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
+          >
+            Return to Thy Ledger
+          </Link>
+
+          <Button
+            onClick={handleRefresh}
+            className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
+          >
+            Refresh Thy Tally
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

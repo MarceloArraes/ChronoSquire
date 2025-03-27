@@ -31,6 +31,7 @@ export default function TimeEntriesCalendar() {
 
   // Fetch time entries
   const queryResult = api.timeEntries.get.useQuery();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entries: TimeEntryWithCompany[] = queryResult.data ?? [];
 
   // Group entries by date
@@ -101,18 +102,20 @@ export default function TimeEntriesCalendar() {
   // };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Time Entries Calendar</CardTitle>
+    <Card className="border-amber-700/30 bg-white/50 shadow-md">
+      <CardHeader className="border-b border-amber-700/30">
+        <CardTitle className="font-serif italic text-amber-950">
+          Time Entries Calendar
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Calendar
           mode="single"
           month={currentMonth}
           onMonthChange={setCurrentMonth}
           selected={selectedDay}
           onSelect={handleDayClick}
-          className="flex flex-1 justify-center rounded-md border"
+          className="flex justify-center rounded-md border border-amber-700/30"
           modifiers={{
             hasEntries: (date) => {
               const dateKey = format(date, "yyyy-MM-dd");
@@ -171,7 +174,7 @@ export default function TimeEntriesCalendar() {
                     {selectedDayEntries.entries.map((entry) => (
                       <div
                         key={entry.id}
-                        className="rounded-md border bg-muted/50 p-3"
+                        className="rounded-md border border-amber-700/30 bg-muted/50 p-3"
                       >
                         <div className="mb-1 flex justify-between">
                           <span className="font-medium">

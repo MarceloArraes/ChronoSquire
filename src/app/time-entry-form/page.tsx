@@ -33,12 +33,12 @@ export default async function Home() {
             {session ? (
               <>
                 <LogOut className="h-5 w-5" />
-                <span className="font-medium">Sign out</span>
+                <span className="font-serif italic">Depart</span>
               </>
             ) : (
               <>
                 <LogIn className="h-5 w-5" />
-                <span className="font-medium">Sign in</span>
+                <span className="font-serif italic">Declare Thyself</span>
               </>
             )}
           </Link>
@@ -48,8 +48,8 @@ export default async function Home() {
           <Card className="border-amber-700/30 bg-white/50 shadow-md">
             <CardHeader className="border-b">
               <CardTitle className="flex items-center gap-2 font-serif text-2xl italic text-amber-950">
-                <Calendar className="h-6 w-6 text-primary" />
-                New Time Entry
+                <Calendar className="h-6 w-6 text-amber-800" />
+                New Time Scroll
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -57,20 +57,22 @@ export default async function Home() {
             </CardContent>
           </Card>
 
-          <Separator className="my-8 bg-gray-200" />
+          <Separator className="my-8 bg-amber-200/50" />
 
           <Card className="border-amber-700/30 bg-white/50 shadow-md">
             <CardHeader className="border-b">
               <CardTitle className="flex items-center gap-2 font-serif text-2xl italic text-amber-950">
-                <Clock className="h-6 w-6 text-primary" />
-                Recent Entries
+                <Clock className="h-6 w-6 text-amber-800" />
+                Recent Time Scrolls
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <TimeEntriesList />
             </CardContent>
-            <CardFooter className="border-t bg-gray-50 px-6 py-4">
-              <p className="text-sm text-gray-500">Showing last 30 entries</p>
+            <CardFooter className="border-t border-amber-700/30 bg-amber-50/50 px-6 py-4">
+              <p className="font-serif text-sm italic text-amber-800">
+                Showing thy last 30 time scrolls
+              </p>
             </CardFooter>
           </Card>
         </main>

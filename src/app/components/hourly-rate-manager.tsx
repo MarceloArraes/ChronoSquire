@@ -85,7 +85,7 @@ export default function HourlyRateManager() {
   console.log("hourly Rate", rates);
   console.log("companies", companies);
   return (
-    <Card className="mx-auto max-w-2xl">
+    <Card className="mx-auto max-w-2xl bg-white/50 shadow-md">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl">Hourly Rates</CardTitle>
       </CardHeader>
@@ -116,7 +116,7 @@ export default function HourlyRateManager() {
         </Select>
         {daysOfWeek.map((day, index) => (
           <div key={index} className="space-y-4">
-            <div className="border-b pb-2">
+            <div className="border-b border-amber-700/30 pb-2">
               <h3 className="text-base font-medium text-foreground">{day}</h3>
             </div>
 
@@ -134,7 +134,12 @@ export default function HourlyRateManager() {
                         className="h-8 w-24 text-right"
                         placeholder="0.00"
                       />
-                      <Button size="sm" onClick={handleSave}>
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={!companyId}
+                        className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
+                      >
                         Save
                       </Button>
                     </>
@@ -148,8 +153,10 @@ export default function HourlyRateManager() {
                       </span>
                       <Button
                         variant="outline"
+                        disabled={!companyId}
                         size="sm"
                         onClick={() => handleEdit(index, false)}
+                        className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
                       >
                         Edit
                       </Button>
@@ -173,7 +180,12 @@ export default function HourlyRateManager() {
                         className="h-8 w-24 text-right"
                         placeholder="0.00"
                       />
-                      <Button size="sm" onClick={handleSave}>
+                      <Button
+                        disabled={!companyId}
+                        size="sm"
+                        onClick={handleSave}
+                        className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
+                      >
                         Save
                       </Button>
                     </>
@@ -187,7 +199,9 @@ export default function HourlyRateManager() {
                       </span>
                       <Button
                         variant="outline"
+                        disabled={!companyId}
                         size="sm"
+                        className="rounded-md border border-amber-700 bg-amber-100 px-4 py-2 font-serif text-sm italic tracking-wide text-amber-900 shadow-sm transition duration-150 hover:bg-amber-200 hover:shadow-md"
                         onClick={() => handleEdit(index, true)}
                       >
                         Edit

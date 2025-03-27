@@ -80,16 +80,14 @@ export default async function Home() {
                 </nav>
 
                 {/* Display Time Entries */}
-                <Card className="border-amber-700/30 bg-white/50 shadow-md">
+                {/* <Card className="border-amber-700/30 bg-white/50 shadow-md">
                   <CardHeader>
                     <CardTitle className="font-serif italic text-amber-950">
                       Recent Time Scrolls
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <TimeEntriesCalendar />
-                  </CardContent>
-                </Card>
+                  <CardContent> */}
+                <TimeEntriesCalendar />
               </>
             ) : (
               // Login Prompt
