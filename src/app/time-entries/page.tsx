@@ -1,7 +1,7 @@
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import Link from "next/link";
-import TimeEntriesList from "../components/time-entries-list";
+import TimeEntriesList from "../components/time-entries-calendar";
 
 export default async function Home() {
   // const hello = await api.post.hello({ text: "from tRPC" });

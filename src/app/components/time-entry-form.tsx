@@ -77,13 +77,13 @@ export default function TimeEntryForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid gap-6 md:grid-cols-2 lg:grid-cols-5"
+      className="grid gap-6 rounded-lg border-2 border-amber-800/40 bg-amber-50/80 p-6 shadow-lg backdrop-blur-sm md:grid-cols-2 lg:grid-cols-5"
     >
       {/* Company Selector */}
       <div className="space-y-2">
         <Label
           htmlFor="company"
-          className="flex items-center gap-2 text-gray-600"
+          className="flex items-center gap-2 font-serif italic text-amber-900"
         >
           <Building2Icon className="h-4 w-4" />
           Company
@@ -103,7 +103,11 @@ export default function TimeEntryForm() {
               </SelectItem>
             ) : companies?.length ? (
               companies?.map((company: Company) => (
-                <SelectItem key={company?.id} value={company?.id}>
+                <SelectItem
+                  key={company?.id}
+                  value={company?.id}
+                  className="font-serif italic text-amber-900"
+                >
                   {company?.name}
                 </SelectItem>
               ))
@@ -118,7 +122,10 @@ export default function TimeEntryForm() {
 
       {/* Date Input */}
       <div className="space-y-2">
-        <Label htmlFor="date" className="flex items-center gap-2 text-gray-600">
+        <Label
+          htmlFor="date"
+          className="flex items-center gap-2 font-serif italic text-amber-900"
+        >
           <CalendarIcon className="h-4 w-4" />
           Date
         </Label>
@@ -136,7 +143,7 @@ export default function TimeEntryForm() {
       <div className="space-y-2">
         <Label
           htmlFor="startTime"
-          className="flex items-center gap-2 text-gray-600"
+          className="flex items-center gap-2 font-serif italic text-amber-900"
         >
           <ClockIcon className="h-4 w-4" />
           Start Time
@@ -155,7 +162,7 @@ export default function TimeEntryForm() {
       <div className="space-y-2">
         <Label
           htmlFor="endTime"
-          className="flex items-center gap-2 text-gray-600"
+          className="flex items-center gap-2 font-serif italic text-amber-900"
         >
           <ClockIcon className="h-4 w-4" />
           End Time
@@ -174,7 +181,7 @@ export default function TimeEntryForm() {
       <div className="space-y-2">
         <Label
           htmlFor="breakTime"
-          className="flex items-center gap-2 text-gray-600"
+          className="flex items-center gap-2 font-serif italic text-amber-900"
         >
           <ClockIcon className="h-4 w-4" />
           Break (minutes)
@@ -194,7 +201,7 @@ export default function TimeEntryForm() {
       <div className="flex items-end">
         <Button
           type="submit"
-          className="h-12 w-full bg-primary text-lg font-semibold hover:bg-primary/90"
+          className="h-12 w-full border border-amber-700 bg-amber-100 font-serif text-lg font-semibold italic text-amber-900 hover:bg-amber-200"
         >
           Add Entry
         </Button>
