@@ -3,7 +3,6 @@ import { api, HydrateClient } from "@/trpc/server";
 import Dashboard from "./components/dashboard";
 import LoginButton from "./components/login-button";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
 import TimeEntriesCalendar from "./components/time-entries-calendar";
 
 export default async function Home() {
@@ -79,14 +78,6 @@ export default async function Home() {
                   </div>
                 </nav>
 
-                {/* Display Time Entries */}
-                {/* <Card className="border-amber-700/30 bg-white/50 shadow-md">
-                  <CardHeader>
-                    <CardTitle className="font-serif italic text-amber-950">
-                      Recent Time Scrolls
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent> */}
                 <TimeEntriesCalendar />
               </>
             ) : (
