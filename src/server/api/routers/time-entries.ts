@@ -62,24 +62,36 @@ export const timeEntriesRouter = createTRPCRouter({
         endTime: z.string().regex(/^\d{2}:\d{2}$/),
         breakMinutes: z.number().optional(),
         companyId: z.string(),
+        isOvernightShift: z.boolean().optional(), // New flag
       }),
     )
     .output(z.custom<TimeEntry>()) // Add explicit output type
     .mutation(async ({ ctx, input }) => {
+      // Parse date and time values
       const entryDate = new Date(input.date);
+
+      // Create simple Date objects for storing the time components
       const startTime = new Date(`1970-01-01T${input.startTime}:00`);
       const endTime = new Date(`1970-01-01T${input.endTime}:00`);
-      // const breakTime = new Date(`1970-01-01T${input.breakTime}:00`);
 
-      const startDateTime = new Date(entryDate);
-      startDateTime.setHours(startTime.getHours(), startTime.getMinutes());
-      const endDateTime = new Date(entryDate);
-      endDateTime.setHours(endTime.getHours(), endTime.getMinutes());
+      // Create full datetime objects for calculations
+      const startDateTime = new Date(input.date);
+      startDateTime.setHours(
+        startTime.getHours(),
+        startTime.getMinutes(),
+        0,
+        0,
+      );
 
-      if (endDateTime <= startDateTime) {
+      const endDateTime = new Date(input.date);
+      endDateTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+
+      // If it's an overnight shift, add a day to the end time for duration calculations
+      if (input.isOvernightShift || endDateTime <= startDateTime) {
         endDateTime.setDate(endDateTime.getDate() + 1);
       }
 
+      // Night shift determination (independent of the overnight calculation)
       const nightStart = new Date(entryDate);
       nightStart.setHours(22, 0, 0, 0); // 10 PM
 
@@ -133,7 +145,7 @@ export const timeEntriesRouter = createTRPCRouter({
           startTime: startTime,
           endTime: endTime,
           companyId: input.companyId,
-          breakMinutes: input.breakMinutes,
+          breakMinutes: input.breakMinutes ?? 0,
           earnings: roundedEarnings,
           totalTime: roundedTotalTime,
         },

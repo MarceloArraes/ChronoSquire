@@ -62,19 +62,12 @@ export default function TimeEntriesList() {
                     {format(new Date(entry.date), "EEEE, MMMM d, yyyy")}
                   </td>
                   <td className="px-4 py-2">
-                    {new Date(entry.startTime).toLocaleTimeString("en-AU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
+                    {format(new Date(entry.startTime), "HH:mm")}
                   </td>
                   <td className="px-4 py-2">
-                    {new Date(entry.endTime).toLocaleTimeString("en-AU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
+                    {format(new Date(entry.endTime), "HH:mm")}
                   </td>
+
                   <td className="px-4 py-2">{entry.company.name}</td>
                   <td className="px-4 py-2">{Number(entry.totalTime)}h</td>
                   <td className="px-4 py-2">${Number(entry.earnings)}</td>

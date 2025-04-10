@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type Company } from "@prisma/client";
+import { parse, format } from "date-fns";
 
 export default function TimeEntryForm() {
   const [date, setDate] = useState("");
@@ -38,7 +39,7 @@ export default function TimeEntryForm() {
       setDate("");
       setStartTime("");
       setEndTime("");
-      setBreakMinutes(null);
+      setBreakMinutes(30);
       setSelectedCompanyId("");
       toast.success("Time entry saved successfully!", {
         position: "top-center",
@@ -61,13 +62,27 @@ export default function TimeEntryForm() {
       return;
     }
 
-    console.log("handle submit");
+    // Simply parse the date and times without timezone conversions
+    const dateObj = parse(date, "yyyy-MM-dd", new Date());
+
+    // Check if end time is before start time to handle overnight shifts
+    const startTimeMinutes =
+      parseInt(startTime?.split(":")[0] ?? "0") * 60 +
+      parseInt(startTime?.split(":")[1] ?? "0");
+    const endTimeMinutes =
+      parseInt(endTime?.split(":")[0] ?? "0") * 60 +
+      parseInt(endTime?.split(":")[1] ?? "0");
+
+    // Include a flag for overnight shifts instead of modifying dates
+    const isOvernightShift = endTimeMinutes < startTimeMinutes;
+
     upsertTimeEntry({
-      date,
-      startTime,
-      endTime,
+      date: format(dateObj, "yyyy-MM-dd"),
+      startTime: startTime, // Use the raw input times
+      endTime: endTime, // Use the raw input times
       breakMinutes: breakMinutes ?? 0,
       companyId: selectedCompanyId,
+      isOvernightShift: isOvernightShift, // New flag to indicate overnight shift
     });
   };
 
