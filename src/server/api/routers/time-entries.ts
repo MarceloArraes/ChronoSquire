@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { type TimeEntry } from "@prisma/client";
+import { format, fromZonedTime } from "date-fns-tz";
+import { parse, addDays, differenceInMilliseconds, getDay } from "date-fns";
 
 export const timeEntriesRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
     const timeEntries = await ctx.db.timeEntry.findMany({
-      orderBy: { date: "desc" },
+      orderBy: { startDateTime: "desc" },
       where: { userId: ctx.session.user.id },
       include: {
         company: true,
@@ -45,7 +47,7 @@ export const timeEntriesRouter = createTRPCRouter({
       }
 
       const timeEntries = await ctx.db.timeEntry.findMany({
-        orderBy: { date: "desc" },
+        orderBy: { startDateTime: "desc" },
         where: {
           userId: ctx.session.user.id,
           ...(Object.keys(dateFilter).length && { date: dateFilter }),
@@ -58,106 +60,163 @@ export const timeEntriesRouter = createTRPCRouter({
     .input(
       z.object({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
-        startTime: z.string().regex(/^\d{2}:\d{2}$/), // HH:MM (24h format)
-        endTime: z.string().regex(/^\d{2}:\d{2}$/),
+        startTime: z.string().regex(/^\d{2}:\d{2}$/), // HH:MM (local to userTimeZone)
+        endTime: z.string().regex(/^\d{2}:\d{2}$/), // HH:MM (local to userTimeZone)
         breakMinutes: z.number().optional(),
         companyId: z.string(),
-        isOvernightShift: z.boolean().optional(), // New flag
+        isOvernightShift: z.boolean().optional(),
       }),
     )
-    .output(z.custom<TimeEntry>()) // Add explicit output type
+    // *** Ensure this output type matches your REAL Prisma schema ***
+    .output(z.custom<TimeEntry>())
     .mutation(async ({ ctx, input }) => {
-      // Parse date and time values
-      const entryDate = new Date(input.date);
+      // --- 1. Define TimeZone and Parse Local Inputs ---
+      const userTimeZone = "Australia/Adelaide"; // Get dynamically later if needed
+      const entryDateString = input.date;
+      const startTimeString = input.startTime;
+      const endTimeString = input.endTime;
 
-      // Create simple Date objects for storing the time components
-      const startTime = new Date(`1970-01-01T${input.startTime}:00`);
-      const endTime = new Date(`1970-01-01T${input.endTime}:00`);
-
-      // Create full datetime objects for calculations
-      const startDateTime = new Date(input.date);
-      startDateTime.setHours(
-        startTime.getHours(),
-        startTime.getMinutes(),
-        0,
-        0,
+      // Parse the combined string assuming it represents time in userTimeZone
+      const startDateTimeLocalGuess = parse(
+        `${entryDateString} ${startTimeString}`,
+        "yyyy-MM-dd HH:mm",
+        new Date(),
+      );
+      const endDateTimeLocalGuess = parse(
+        `${entryDateString} ${endTimeString}`,
+        "yyyy-MM-dd HH:mm",
+        new Date(),
       );
 
-      const endDateTime = new Date(input.date);
-      endDateTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+      // --- 2. Convert Guessed Local Times to Actual UTC Times ---
+      // *** USE fromZonedTime ***
+      const startDateTimeUtc = fromZonedTime(
+        startDateTimeLocalGuess,
+        userTimeZone,
+      );
+      let endDateTimeUtc = fromZonedTime(endDateTimeLocalGuess, userTimeZone);
 
-      // If it's an overnight shift, add a day to the end time for duration calculations
-      if (input.isOvernightShift || endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
+      console.log("Raw Input:", input);
+      console.log("Start Local Guess:", startDateTimeLocalGuess);
+      console.log("End Local Guess:", endDateTimeLocalGuess);
+      console.log("Start UTC:", startDateTimeUtc);
+      console.log("End UTC:", endDateTimeUtc);
+
+      // --- 3. Handle Overnight Shift (using UTC dates) ---
+      if (input.isOvernightShift || endDateTimeUtc <= startDateTimeUtc) {
+        // Add a day to the UTC end time
+        endDateTimeUtc = addDays(endDateTimeUtc, 1);
+        console.log("Adjusted End UTC (Overnight):", endDateTimeUtc);
       }
 
-      // Night shift determination (independent of the overnight calculation)
-      const nightStart = new Date(entryDate);
-      nightStart.setHours(22, 0, 0, 0); // 10 PM
+      // --- 4. Calculate Duration (using UTC dates) ---
+      const breakMs = (input.breakMinutes ?? 0) * 60 * 1000;
+      const totalMs =
+        differenceInMilliseconds(endDateTimeUtc, startDateTimeUtc) - breakMs;
+      const totalTime = totalMs / (1000 * 60 * 60); // Hours
+      const roundedTotalTime = Math.round(totalTime * 100) / 100;
+      console.log("Total Time (Hours):", roundedTotalTime);
 
-      const nightEnd = new Date(nightStart);
-      nightEnd.setDate(nightEnd.getDate() + 1);
-      nightEnd.setHours(6, 0, 0, 0); // 6 AM next day
+      // --- 5. Determine Day of Week & Night Shift for Rate ---
+      // Use the START time in the user's local zone to determine the relevant day/shift for the rate
+      const startDateTimeInUserZone = fromZonedTime(
+        startDateTimeUtc,
+        userTimeZone,
+      );
+      const dayOfWeekForRate = getDay(startDateTimeInUserZone); // 0=Sun, 1=Mon,...
 
-      const isNightShift = startDateTime < nightEnd && endDateTime > nightStart;
+      // Night shift check based on userTimeZone (e.g., 10 PM to 6 AM Local)
+      // Need the date part relevant to the start time in the local zone
+      const localDatePartForNightCheck = format(
+        startDateTimeInUserZone,
+        "yyyy-MM-dd",
+        { timeZone: userTimeZone },
+      );
 
+      const nightStartLocal = parse(
+        `${localDatePartForNightCheck} 22:00`,
+        "yyyy-MM-dd HH:mm",
+        new Date(),
+      );
+      const nightEndLocal = parse(
+        `${localDatePartForNightCheck} 06:00`,
+        "yyyy-MM-dd HH:mm",
+        new Date(),
+      );
+
+      const nightStartUtc = fromZonedTime(nightStartLocal, userTimeZone);
+      const nightEndUtc = fromZonedTime(
+        addDays(nightEndLocal, 1),
+        userTimeZone,
+      ); // 6 AM next day
+
+      // Check if the interval [startDateTimeUtc, endDateTimeUtc) overlaps [nightStartUtc, nightEndUtc)
+      const isNightShift =
+        startDateTimeUtc < nightEndUtc && endDateTimeUtc > nightStartUtc;
+
+      console.log("Rate Check Timezone:", userTimeZone);
+      console.log("Rate Check Day:", dayOfWeekForRate);
+      console.log("Rate Check isNightShift:", isNightShift);
+
+      // --- 6. Fetch Rate ---
       const rate = await ctx.db.hourlyRate.findFirst({
         where: {
           userId: ctx.session.user.id,
           companyId: input.companyId,
-          dayOfWeek: entryDate.getDay(),
+          dayOfWeek: dayOfWeekForRate,
           isNightShift: isNightShift,
-        },
-        include: {
-          Company: true,
         },
       });
 
-      const breakMs = (input.breakMinutes ?? 0) * 60 * 1000; // Convert minutes to milliseconds
-      const totalMs = endDateTime.getTime() - startDateTime.getTime() - breakMs;
-      const totalTime = totalMs / (1000 * 60 * 60); // Convert to hours
-
+      // --- 7. Calculate Earnings ---
       let earnings = 0;
       if (rate) {
-        earnings = totalTime * Number(rate.rate);
+        earnings = roundedTotalTime * Number(rate.rate);
       } else {
-        console.log("No rate found for this entry:", {
-          userId: ctx.session.user.id,
-          companyId: input.companyId,
-        });
+        console.log("!!! No rate found !!!");
       }
-
-      const roundedTotalTime = Math.round(totalTime * 100) / 100;
       const roundedEarnings = Math.round(earnings * 100) / 100;
+      console.log("Earnings:", roundedEarnings);
 
+      // --- 8. Upsert Data ---
+      // *** CRITICAL: Update Prisma Schema & Database ***
+      // Change columns from `date`, `startTime`, `endTime` to `entryDate`, `startDateTime`, `endDateTime`
+      // Ensure `startDateTime` and `endDateTime` are `DateTime` type in Prisma / Timestamp WITH Timezone in DB.
+      // Update your `@@unique` constraint.
       const result = await ctx.db.timeEntry.upsert({
         where: {
-          user_company_shift_unique: {
+          // *** Use your NEW unique constraint (adjust name) ***
+          user_company_start_unique: {
             userId: ctx.session.user.id,
-            date: entryDate,
-            startTime: startTime,
             companyId: input.companyId,
+            startDateTime: startDateTimeUtc, // The actual UTC start timestamp
           },
         },
         create: {
           userId: ctx.session.user.id,
-          date: new Date(input.date),
-          startTime: startTime,
-          endTime: endTime,
           companyId: input.companyId,
+          // Store the day the entry *starts* on, as UTC midnight, for easy range queries
+          entryDate: fromZonedTime(input.date, "UTC"),
+          startDateTime: startDateTimeUtc,
+          endDateTime: endDateTimeUtc,
           breakMinutes: input.breakMinutes ?? 0,
-          earnings: roundedEarnings,
-          totalTime: roundedTotalTime,
+          earnings: roundedEarnings.toString(), // Or use Decimal type
+          totalTime: roundedTotalTime.toString(), // Or use Decimal type
         },
         update: {
-          startTime: startTime,
-          endTime: endTime,
+          // Only update things that might change if the start time is the same
+          endDateTime: endDateTimeUtc,
           breakMinutes: input.breakMinutes ?? 0,
-          earnings: roundedEarnings,
-          totalTime: roundedTotalTime,
+          earnings: roundedEarnings.toString(),
+          totalTime: roundedTotalTime.toString(),
         },
+        // *** Include company data ONLY if needed by the frontend from this call ***
+        // include: { company: true }
       });
 
-      return result;
+      console.log("Upsert Result:", result);
+
+      // --- 9. Return Result ---
+      return result; // Prisma returns Date objects; tRPC serializes them.
     }),
 });

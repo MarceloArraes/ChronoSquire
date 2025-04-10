@@ -59,13 +59,13 @@ export default function TimeEntriesList() {
                   className="bg-white/50 transition-colors hover:bg-amber-100/50"
                 >
                   <td className="px-4 py-2">
-                    {format(new Date(entry.date), "EEEE, MMMM d, yyyy")}
+                    {format(new Date(entry.entryDate), "EEEE, MMMM d, yyyy")}
                   </td>
                   <td className="px-4 py-2">
-                    {format(new Date(entry.startTime), "HH:mm")}
+                    {format(new Date(entry.startDateTime), "HH:mm")}
                   </td>
                   <td className="px-4 py-2">
-                    {format(new Date(entry.endTime), "HH:mm")}
+                    {format(new Date(entry.endDateTime), "HH:mm")}
                   </td>
 
                   <td className="px-4 py-2">{entry.company.name}</td>

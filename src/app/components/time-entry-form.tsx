@@ -33,26 +33,27 @@ export default function TimeEntryForm() {
   } = api.companies.getAll.useQuery();
   const utils = api.useUtils();
 
-  const { mutate: upsertTimeEntry } = api.timeEntries.upsert.useMutation({
-    onSuccess: () => {
-      void utils.timeEntries.invalidate();
-      setDate("");
-      setStartTime("");
-      setEndTime("");
-      setBreakMinutes(30);
-      setSelectedCompanyId("");
-      toast.success("Time entry saved successfully!", {
-        position: "top-center",
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast.error("Failed to save time entry", {
-        position: "top-center",
-        duration: 5000,
-      });
-    },
-  });
+  const { mutate: upsertTimeEntry, isPending } =
+    api.timeEntries.upsert.useMutation({
+      onSuccess: () => {
+        void utils.timeEntries.invalidate();
+        setDate("");
+        setStartTime("");
+        setEndTime("");
+        setBreakMinutes(30);
+        setSelectedCompanyId("");
+        toast.success("Time entry saved successfully!", {
+          position: "top-center",
+          duration: 3000,
+        });
+      },
+      onError: () => {
+        toast.error("Failed to save time entry", {
+          position: "top-center",
+          duration: 5000,
+        });
+      },
+    });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,8 +206,12 @@ export default function TimeEntryForm() {
           id="breakTime"
           type="number"
           min="0"
-          value={breakMinutes?.toString()}
-          onChange={(e) => setBreakMinutes(parseInt(e.target.value))}
+          value={breakMinutes === null ? "" : breakMinutes.toString()}
+          onChange={(e) => {
+            const value = parseInt(e.target.value);
+            // Allow clearing the input or setting a valid number
+            setBreakMinutes(isNaN(value) ? null : value);
+          }}
           placeholder={"30"}
           className="h-12 text-lg"
         />
@@ -216,9 +221,10 @@ export default function TimeEntryForm() {
       <div className="flex items-end">
         <Button
           type="submit"
+          disabled={isPending}
           className="h-12 w-full border border-amber-700 bg-amber-100 font-serif text-lg font-semibold italic text-amber-900 hover:bg-amber-200"
         >
-          Add Entry
+          {isPending ? "Saving..." : "Add Entry"}
         </Button>
       </div>
     </form>
