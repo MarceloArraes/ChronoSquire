@@ -39,7 +39,7 @@ export default function TimeEntriesCalendar() {
     const groupedEntries = new Map<string, DailyEntrySummary>();
 
     entries.forEach((entry) => {
-      const dateKey = format(new Date(entry.date), "yyyy-MM-dd");
+      const dateKey = format(new Date(entry.entryDate), "yyyy-MM-dd");
 
       if (!groupedEntries.has(dateKey)) {
         groupedEntries.set(dateKey, {
@@ -183,7 +183,7 @@ export default function TimeEntriesCalendar() {
                           <span>${Number(entry.earnings)}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(entry.startTime).toLocaleTimeString(
+                          {new Date(entry.startDateTime).toLocaleTimeString(
                             "en-AU",
                             {
                               hour: "2-digit",
@@ -192,11 +192,14 @@ export default function TimeEntriesCalendar() {
                             },
                           )}{" "}
                           -{" "}
-                          {new Date(entry.endTime).toLocaleTimeString("en-AU", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}
+                          {new Date(entry.endDateTime).toLocaleTimeString(
+                            "en-AU",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            },
+                          )}
                           {entry.breakMinutes > 0 &&
                             ` (${entry.breakMinutes}min break)`}
                         </div>

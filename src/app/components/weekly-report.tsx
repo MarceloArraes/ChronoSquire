@@ -51,7 +51,8 @@ export default function WeeklyReport() {
   const calculateTotalHours = () => {
     const total = entries.reduce((total, entry) => {
       try {
-        if (!entry.date || !entry.startTime || !entry.endTime) return total;
+        if (!entry.entryDate || !entry.startDateTime || !entry.endDateTime)
+          return total;
         if (!entry.totalTime) return total;
 
         return total + Number(entry.totalTime);
