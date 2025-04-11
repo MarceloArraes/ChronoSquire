@@ -134,7 +134,7 @@ export default function TimeEntriesCalendar() {
                 <div className="relative h-full w-full">
                   <div className="text-lg">{props.date.getDate()}</div>
                   {summary && (
-                    <div className="pointer-events-none absolute inset-2 items-center justify-center pt-5 text-sm leading-tight">
+                    <div className="pointer-events-none absolute inset-2 items-center justify-center pt-5 text-[0.6rem] leading-tight sm:text-sm">
                       <div className="font-medium focus:text-primary-foreground">
                         ${summary.totalEarnings}
                       </div>

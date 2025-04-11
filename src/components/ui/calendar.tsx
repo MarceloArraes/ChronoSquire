@@ -20,10 +20,11 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        months:
+          "flex flex-col sm:flex-row sm:space-y-4 space-y-2 space-x-2 sm:space-x-4",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-md font-medium",
+        caption_label: "sm:text-md text-sm sm:font-medium font-small",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -33,12 +34,13 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
-        head_cell: "text-muted-foreground rounded-md w-16 font-normal text-md",
-        row: "flex w-full mt-2",
-        cell: "h-16 w-16 text-center text-md p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        head_cell:
+          "text-muted-foreground rounded-md sm:w-16 w-10 font-normal sm:text-md text-sm",
+        row: "flex w-full sm:mt-2 mt-4",
+        cell: "h-10 w-10 sm:h-16 sm:w-16 text-center text-md p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-20 w-14 p-2 font-normal aria-selected:opacity-100 text-black",
+          "sm:h-20 sm:w-14 h-16 w-10 p-0 font-normal aria-selected:opacity-100 text-black",
         ),
         day_range_end: "day-range-end",
         day_selected:
