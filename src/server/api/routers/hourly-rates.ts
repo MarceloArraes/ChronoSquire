@@ -5,7 +5,7 @@ import { type HourlyRate } from "@prisma/client";
 export const hourlyRateRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
     const hourlyRates = await ctx.db.hourlyRate.findMany({
-      orderBy: { dayOfWeek: "desc" },
+      orderBy: { typeOfDay: "desc" },
       where: { userId: ctx.session.user.id },
       include: {
         Company: true,
@@ -29,14 +29,14 @@ export const hourlyRateRouter = createTRPCRouter({
         where: {
           user_company_day_shift_unique: {
             userId: ctx.session.user.id,
-            dayOfWeek: input.day_of_week,
+            typeOfDay: input.day_of_week,
             isNightShift: input.is_night_shift,
             companyId: input.companyId,
           },
         },
         create: {
           userId: ctx.session.user.id,
-          dayOfWeek: input.day_of_week,
+          typeOfDay: input.day_of_week,
           isNightShift: input.is_night_shift,
           rate: input.rate,
           companyId: input.companyId,

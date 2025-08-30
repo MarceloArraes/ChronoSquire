@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface WorkSchedule {
   id: number;
-  day_of_week: number;
+  type_of_day: number;
   start_time: string;
   end_time: string;
 }
@@ -48,8 +48,8 @@ export default function ScheduleManager() {
     }
   };
 
-  const handleEdit = (dayOfWeek: number) => {
-    const schedule = schedules.find((s) => s.day_of_week === dayOfWeek);
+  const handleEdit = (typeOfDay: number) => {
+    const schedule = schedules.find((s) => s.type_of_day === typeOfDay);
     if (schedule) {
       setStartTime(schedule.start_time);
       setEndTime(schedule.end_time);
@@ -57,21 +57,21 @@ export default function ScheduleManager() {
       setStartTime("");
       setEndTime("");
     }
-    setEditingDay(dayOfWeek);
+    setEditingDay(typeOfDay);
   };
 
   const handleSave = async () => {
     if (editingDay === null) return;
 
     try {
-      const method = schedules.some((s) => s.day_of_week === editingDay)
+      const method = schedules.some((s) => s.type_of_day === editingDay)
         ? "PUT"
         : "POST";
       const response = await fetch("/api/schedules", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          day_of_week: editingDay,
+          type_of_day: editingDay,
           start_time: startTime,
           end_time: endTime,
         }),
@@ -118,10 +118,10 @@ export default function ScheduleManager() {
             ) : (
               <>
                 <span>
-                  {schedules.find((s) => s.day_of_week === index)?.start_time ??
+                  {schedules.find((s) => s.type_of_day === index)?.start_time ??
                     "Not set"}{" "}
                   -
-                  {schedules.find((s) => s.day_of_week === index)?.end_time ??
+                  {schedules.find((s) => s.type_of_day === index)?.end_time ??
                     "Not set"}
                 </span>
                 <Button onClick={() => handleEdit(index)}>Edit</Button>

@@ -18,6 +18,7 @@ declare module "next-auth" {
       id: string;
       // ...other properties
       // role: UserRole;
+      timeZone?: string | null;
     } & DefaultSession["user"];
   }
 
@@ -34,7 +35,10 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    DiscordProvider({
+  clientId: process.env.DISCORD_CLIENT_ID!,
+  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+}),
     EmailProvider({
       server: process.env.EMAIL_SERVER,
       from: process.env.EMAIL_FROM,
@@ -57,6 +61,7 @@ export const authConfig = {
       user: {
         ...session.user,
         id: user.id,
+        timeZone: user.timeZone,
       },
     }),
   },

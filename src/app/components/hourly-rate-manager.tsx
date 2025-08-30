@@ -20,13 +20,10 @@ import {
 } from "@/components/ui/select";
 
 const daysOfWeek = [
+  "Weekday",
   "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
   "Saturday",
+  "Holiday"
 ];
 
 export default function HourlyRateManager() {
@@ -50,14 +47,14 @@ export default function HourlyRateManager() {
     },
   });
 
-  const handleEdit = (dayOfWeek: number, isNight: boolean) => {
+  const handleEdit = (typeOfDay: number, isNight: boolean) => {
     if (!queryResult.data) return;
     const existingRate = rates.find((r) => {
-      return r.dayOfWeek === dayOfWeek && r.isNightShift === isNight;
+      return r.typeOfDay === typeOfDay && r.isNightShift === isNight;
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     setRate(existingRate?.rate?.toString() ?? "");
-    setEditingDay(dayOfWeek);
+    setEditingDay(typeOfDay);
     setIsNightShift(isNight);
   };
 
@@ -216,7 +213,7 @@ export default function HourlyRateManager() {
                       >
                         $
                         {rates
-                          .find((r) => r.dayOfWeek === index && !r.isNightShift)
+                          .find((r) => r.typeOfDay === index && !r.isNightShift)
                           ?.rate?.toString() ?? "—"}{" "}
                         {/* Added toFixed(2) */}
                       </span>
@@ -281,7 +278,7 @@ export default function HourlyRateManager() {
                       >
                         $
                         {rates
-                          .find((r) => r.dayOfWeek === index && r.isNightShift)
+                          .find((r) => r.typeOfDay === index && r.isNightShift)
                           ?.rate?.toString() ?? "—"}{" "}
                         {/* Added toFixed(2) */}
                       </span>

@@ -5,6 +5,8 @@ import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/toaster";
+import NavigationBar from "./components/navigation";
+import { Footer } from "./components/footer";
 // import { ThemeProvider } from "@/components/theme-provider";
 // import { ThemeToggle } from "./components/theme-toggle";
 
@@ -25,7 +27,9 @@ export default function RootLayout({
           {/* <div className="absolute right-4 top-4">
               <ThemeToggle />
             </div> */}
+          <NavigationBar>
           {children}
+          </NavigationBar>
           <Toaster />
         </TRPCReactProvider>
         {/* </ThemeProvider> */}
